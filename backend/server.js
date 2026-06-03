@@ -12,13 +12,17 @@ mongoose.connect(MONGO_URI)
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch(err => console.error("❌ MongoDB connection failed:", err.message));
 
-// CORS — allow your frontend origin
-const allowedOrigins = [
-  "http://localhost:5173",
-  process.env.FRONTEND_URL,
-].filter(Boolean);
-
-app.use(cors({ origin: allowedOrigins }));
+// CORS — dynamically allow localhost and any Vercel deployments
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || 
+        origin.startsWith("http://localhost:") || 
+        origin.endsWith(".vercel.app")) {
+      return callback(null, true);
+    }
+    callback(new Error("Not allowed by CORS"));
+  }
+}));
 app.use(express.json());
 
 app.use("/api/todo", require("./routes/Todo"));
